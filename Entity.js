@@ -1,8 +1,6 @@
 var initPack = {player:[],bullet:[]};
 var removePack = {player:[],bullet:[]};
 
-
-
 Entity = function(param){
 	var self = {
 		x:250,
@@ -209,7 +207,7 @@ Player.getAllInitPack = function(){
 }
 
 Player.onDisconnect = function(socket){
-	let player = Player.list[socket.id];
+	var player = Player.list[socket.id];
 	if(!player)
 		return;
 	Database.savePlayerProgress({
