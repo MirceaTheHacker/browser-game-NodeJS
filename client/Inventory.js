@@ -56,7 +56,7 @@ Inventory = function(items,socket,server){
 			addButton(self.items[i]);
 	}
 	if(self.server){
-		self.socket.on("useItem",function(itemId){ 
+		self.socket.on("useItem",function(itemId){
 			if(!self.hasItem(itemId,1)){
 				console.log("Cheater");
 				return;
