@@ -44,8 +44,8 @@ Inventory = function(items,socket,server){
 		var inventory = document.getElementById("inventory");
 		inventory.innerHTML = "";
 		var addButton = function(data){
-			let item = Item.list[data.id];
-			let button = document.createElement('button'); 
+			var item = Item.list[data.id];
+			var button = document.createElement('button'); 
 			button.onclick = function(){
 				self.socket.emit("useItem",item.id);
 			}
@@ -61,7 +61,7 @@ Inventory = function(items,socket,server){
 				console.log("Cheater");
 				return;
 			}
-			let item = Item.list[itemId];
+			var item = Item.list[itemId];
 			item.event(Player.list[self.socket.id]);
 		});
 
