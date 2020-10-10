@@ -106,6 +106,7 @@
 	});
 
 	//game
+	var lastScore = null;
 	var Img = {};
 	Img.player = new Image();
 	Img.player.src = '/client/img/player.png';
@@ -117,6 +118,11 @@
 	Img.map['field'].src = '/client/img/map.png';
 	Img.map['forest'] = new Image();
 	Img.map['forest'].src = '/client/img/map2.png';
+
+	Img.upgrade1 = new Image();
+	Img.upgrade1.src = '/client/img/upgrade1.png';
+	Img.upgrade2 = new Image();
+	Img.upgrade2.src = '/client/img/upgrade2.png';
 	
 	var ctx = document.getElementById("ctx").getContext("2d");
 	var ctxUi = document.getElementById("ctx-ui").getContext("2d");
@@ -159,7 +165,7 @@
 		
 		return self;
 	}
-	Player.list = {};
+
 
 		
 	var Bullet = function(initPack){
@@ -186,7 +192,49 @@
 		Bullet.list[self.id] = self;		
 		return self;
 	}
-	Bullet.list = {};
+
+	var Upgrade = function(initPack){
+		var self = {};
+		self.id = initPack.id;
+		self.x = initPack.x;
+		self.y = initPack.y;
+		self.map = initPack.map;
+		self.category = initPack.category;
+		
+		self.draw = function(){
+			if(Player.list[selfId].map !== self.map)
+				return;
+
+			var img;
+			if (self.category === 'score')
+			{
+				img = Img.upgrade1;
+			}
+			else if (self.category === 'atkSpd')
+			{
+				img = Img.upgrade2;
+			}
+			else
+			{
+				img = Img.upgrade2;
+			}
+
+			
+			var width = img.width/2;
+			var height = img.height/2;
+			
+			var x = self.x - Player.list[selfId].x + WIDTH/2;
+			var y = self.y - Player.list[selfId].y + HEIGHT/2;
+			
+			ctx.drawImage(img,
+				0,0,img.width,img.height,
+				x-width/2,y-height/2,width,height);
+		}
+		
+		Upgrade.list[self.id] = self;		
+		return self;
+	}
+
 	
 	var selfId = null;
 
@@ -199,6 +247,9 @@
 		}
 		for(var i = 0 ; i < data.bullet.length; i++){
 			new Bullet(data.bullet[i]);
+		}
+		for(var i = 0 ; i < data.upgrade.length; i++){
+			new Upgrade(data.upgrade[i]);
 		}
 	});
 	
@@ -230,6 +281,19 @@
 					b.y = pack.y;
 			}
 		}
+
+		for(var i = 0 ; i < data.upgrade.length; i++){
+			var pack = data.upgrade[i];
+			var u = Upgrade.list[data.upgrade[i].id];
+			if(u){
+				if(pack.x !== undefined)
+					u.x = pack.x;
+				if(pack.y !== undefined)
+					u.y = pack.y;
+				if(pack.category !== undefined)
+					u.category = pack.category;
+			}
+		}
 	});
 	
 	socket.on('remove',function(data){
@@ -239,6 +303,9 @@
 		}
 		for(var i = 0 ; i < data.bullet.length; i++){
 			delete Bullet.list[data.bullet[i]];
+		}
+		for(var i = 0 ; i < data.upgrade.length; i++){
+			delete Upgrade.list[data.upgrade[i]];
 		}
 	});
 	
@@ -252,6 +319,8 @@
 			Player.list[i].draw();
 		for(var i in Bullet.list)
 			Bullet.list[i].draw();
+		for(var i in Upgrade.list)
+			Upgrade.list[i].draw();
 	},40);
 	
 	var drawMap = function(){
@@ -269,7 +338,7 @@
 		ctxUi.fillStyle = 'white';
 		ctxUi.fillText(Player.list[selfId].score,0,30);
 	}
-	var lastScore = null;
+
 	
 	document.onkeydown = function(event){
 		if(event.keyCode === 68)	//d
@@ -310,7 +379,9 @@
 		event.preventDefault();
 	}
 	
-	
+	Player.list = {};
+	Bullet.list = {};
+	Upgrade.list = {};
 	
 </script>
 

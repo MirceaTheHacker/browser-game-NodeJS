@@ -1,5 +1,6 @@
-var initPack = {player:[],bullet:[]};
-var removePack = {player:[],bullet:[]};
+var initPack = {player:[],bullet:[],upgrade:[]};
+var removePack = {player:[],bullet:[],upgrade:[]};
+
 
 Entity = function(param){
 	var self = {
@@ -31,6 +32,17 @@ Entity = function(param){
 	self.getDistance = function(pt){
 		return Math.sqrt(Math.pow(self.x-pt.x,2) + Math.pow(self.y-pt.y,2));
 	}
+	self.isColliding = function(entity2)
+	{
+		if(self.map === entity2.map && self.getDistance(entity2) < 32)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 	return self;
 }
 Entity.getFrameUpdateData = function(){
@@ -38,20 +50,25 @@ Entity.getFrameUpdateData = function(){
 		initPack:{
 			player:initPack.player,
 			bullet:initPack.bullet,
+			upgrade:initPack.upgrade,
 		},
 		removePack:{
 			player:removePack.player,
 			bullet:removePack.bullet,
+			upgrade:removePack.upgrade,
 		},
 		updatePack:{
 			player:Player.update(),
 			bullet:Bullet.update(),
+			upgrade:Upgrade.update()
 		}
 	};
 	initPack.player = [];
 	initPack.bullet = [];
+	initPack.upgrade = [];
 	removePack.player = [];
 	removePack.bullet = [];
+	removePack.upgrade = [];
 	return pack;
 }
 
@@ -72,14 +89,18 @@ Player = function(param){
 	self.score = 0;
 	self.inventory = new Inventory(param.progress.items,param.socket,true);
 	self.socket = param.socket;
+	self.atkSpd = 10;
+	self.attackCounter = 0;
 	
 	var super_update = self.update;
 	self.update = function(){
 		self.updateSpd();
-		
 		super_update();
-		
-		if(self.pressingAttack){
+
+		self.attackCounter += self.atkSpd
+
+		if(self.pressingAttack && self.attackCounter > 250){ // 1 per sec def
+			self.attackCounter = 0;
 			self.shootBullet(self.mouseAngle);
 		}
 	}
@@ -121,6 +142,7 @@ Player = function(param){
 			hpMax:self.hpMax,
 			score:self.score,
 			map:self.map,
+			atkSpd:self.atkSpd,
 		};		
 	}
 	self.getUpdatePack = function(){
@@ -131,15 +153,15 @@ Player = function(param){
 			hp:self.hp,
 			score:self.score,
 			map:self.map,
+			atkSpd:self.atkSpd,
 		}	
 	}
 	
 	Player.list[self.id] = self;
-	
 	initPack.player.push(self.getInitPack());
 	return self;
 }
-Player.list = {};
+
 Player.onConnect = function(socket,username,progress){
 	var map = 'forest';
 	if(Math.random() < 0.5)
@@ -197,6 +219,7 @@ Player.onConnect = function(socket,username,progress){
 		selfId:socket.id,
 		player:Player.getAllInitPack(),
 		bullet:Bullet.getAllInitPack(),
+		upgrade:Upgrade.getAllInitPack(),
 	})
 }
 Player.getAllInitPack = function(){
@@ -246,7 +269,7 @@ Bullet = function(param){
 		
 		for(var i in Player.list){
 			var p = Player.list[i];
-			if(self.map === p.map && self.getDistance(p) < 32 && self.parent !== p.id){
+			if(self.isColliding(p) && self.parent !== p.id){
 				p.hp -= 1;
 								
 				if(p.hp <= 0){
@@ -281,7 +304,6 @@ Bullet = function(param){
 	initPack.bullet.push(self.getInitPack());
 	return self;
 }
-Bullet.list = {};
 
 Bullet.update = function(){
 	var pack = [];
@@ -303,3 +325,127 @@ Bullet.getAllInitPack = function(){
 		bullets.push(Bullet.list[i].getInitPack());
 	return bullets;
 }
+
+Upgrade = function (param){
+	var self = Entity(param);
+	self.category = param.category;
+
+	self.getUpdatePack = function(){
+		return {
+			id:self.id,
+			x:self.x,
+			y:self.y,
+			category: self.category,
+		};
+	}
+
+	var super_update = self.update;
+	self.update = function(){
+		super_update();
+		for(var i in Player.list){
+			var player = Player.list[i];
+			if(self.isColliding(player))
+			{
+				if(self.category === 'score')
+					player.score += 1;
+				if(self.category === 'atkSpd')
+					player.atkSpd += 1;
+				delete Upgrade.list[self.id];
+				removePack.upgrade.push(self.id);
+			}
+		}
+	}
+
+	self.getInitPack = function(){
+		return {
+			id:self.id,
+			x:self.x,
+			y:self.y,
+			map:self.map,
+			category:self.category,
+		};
+	}
+
+
+	Upgrade.list[self.id] = self;
+	initPack.upgrade.push(self.getInitPack());
+}
+
+
+
+Upgrade.update = function(){
+	var pack = [];
+	for(var i in Upgrade.list)
+	{
+		var upgrade = Upgrade.list[i];
+		upgrade.update();
+		if (upgrade.toRemove)
+		{
+			delete Upgrade.list[i];
+			removePack.upgrade.push(upgrade.id);
+		}
+		else
+		{
+			pack.push(upgrade.getUpdatePack());
+		}
+	}
+
+	return pack;
+}	
+
+Upgrade.randomlyGenerate = function(){
+	var map;
+	if (Upgrade.getNoOfUpgradesOnMap('field') <= 2)
+	{
+		map = 'field'
+	}
+	else if (Upgrade.getNoOfUpgradesOnMap('forest') <= 2)
+	{
+		map = 'forest'
+	}
+	else
+	{
+		return;
+	}
+
+	//Math.random() returns a number between 0 and 1
+	var upgrade = {
+	x : Math.random() * 500,
+	y : Math.random() * 500,
+	id : Math.random(),
+	map : map,
+	}
+	
+	if(Math.random()<0.5){
+		upgrade.category = 'score';
+	} else {
+		upgrade.category = 'atkSpd';
+	}
+	
+	Upgrade(upgrade);
+}
+
+Upgrade.getNoOfUpgradesOnMap = function(map)
+{
+	var count = 0;
+	for (var id in Upgrade.list)
+	{
+		var upgrade = Upgrade.list[id];
+		if (upgrade.map === map)
+		{
+			count++;
+		}
+	}
+	return count;
+}
+
+Upgrade.getAllInitPack = function(){
+	var upgrades = [];
+	for(var i in Upgrade.list)
+	upgrades.push(Upgrade.list[i].getInitPack());
+	return upgrades;
+}
+
+Player.list = {};
+Bullet.list = {};
+Upgrade.list = {};

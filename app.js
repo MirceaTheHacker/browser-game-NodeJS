@@ -75,7 +75,7 @@ setInterval(function(){
 		socket.emit('update',packs.updatePack);
 		socket.emit('remove',packs.removePack);
 	}
-	
+	Upgrade.randomlyGenerate();
 },1000/25);
 
 /*
