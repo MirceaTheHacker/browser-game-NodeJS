@@ -1,6 +1,6 @@
-var USE_DB = false;
+var USE_DB = true;
 var mongojs = USE_DB ? require("mongojs") : null;
-var db = USE_DB ? mongojs('localhost:27017/myGame', ['account','progress']) : null;
+var db = USE_DB ? mongojs('mongodb+srv://dbUser:8dt4p9ndpy2p@cluster0.7wo5q.mongodb.net/myGame?retryWrites=true&w=majority', ['account','progress']) : null;
 
 //account:  {username:string, password:string}
 //progress:  {username:string, items:[{id:string,amount:number}]}
@@ -39,12 +39,19 @@ Database.getPlayerProgress = function(username,cb){
     if(!USE_DB)
         return cb({items:[]});
 	db.progress.findOne({username:username},function(err,res){
-		cb({items:res.items});
+		if(res)
+			cb({items:res.items});
+		else
+			cb({items:[]});
 	});
 }
 Database.savePlayerProgress = function(data,cb){
     cb = cb || function(){}
     if(!USE_DB)
         return cb();
-    db.progress.update({username:data.username},data,{upsert:true},cb);
+    db.progress.updateOne(
+		{username : data.username},
+		{$set : {"items" : data.items}},
+		{ upsert : true });
+	cb();
 }
