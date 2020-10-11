@@ -167,8 +167,13 @@ Player.onConnect = function (socket, username, progress) {
   });
 
   socket.on("changeMap", function (data) {
-    if (player.map.id === "field") player.map = Maps.list['forest'];
-    else Maps.list['field'];
+	if (player.map.id === "field")
+	{
+		player.map = Maps.list['forest'];
+	}
+	else {
+		player.map = Maps.list['field'];
+	}
   });
 
   socket.on("sendMsgToServer", function (data) {
