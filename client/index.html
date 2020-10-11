@@ -52,7 +52,7 @@
 		if(data.success){
 			signDiv.style.display = 'none';
 			gameDiv.style.display = 'inline-block';
-			//resizeCanvas();
+			resizeCanvas();
 		} else
 			alert("Sign in unsuccessul.");
 	});
@@ -151,8 +151,6 @@
 		GAME_WIDTH = window.innerWidth - 4 - ratio * belowGame.offsetHeight;
 		GAME_HEIGHT = window.innerHeight - 4 - belowGame.offsetHeight;
 
-
-
 		if(GAME_HEIGHT < GAME_WIDTH / ratio){
 			GAME_WIDTH = GAME_HEIGHT * ratio;
 		} else {
@@ -173,8 +171,6 @@
 	window.addEventListener('resize',function(){
   		resizeCanvas();
 	});
-
-	belowGame.addEventListener("load", resizeCanvas());
 	
 	var Player = function(initPack){
 		var self = {};
@@ -373,9 +369,11 @@
 	
 	var drawMap = function(){
 		var player = Player.list[selfId];
-		var x = WIDTH/2 - player.x;
-		var y = HEIGHT/2 - player.y;
-		canvas.drawImage(Img.map[player.map],x,y);
+		var x = WIDTH / 2 - player.x;
+		var y = HEIGHT / 2 - player.y;
+		var image = Img.map[player.map];
+		canvas.drawImage(image, 0, 0, image.width, image.height,
+		 x, y, image.width * 2, image.height * 2);
 	}
 	
 	var drawScore = function(){
