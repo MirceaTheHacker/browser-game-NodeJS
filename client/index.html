@@ -6,27 +6,26 @@
 </div>
 
 <div id="gameDiv" style="display:none;">
-	<div id="game" style="position:absolute;width:500px;height:500px">
-		<canvas id="ctx" width="500" height="500" style="position:absolute;border:1px solid #000000;"></canvas>
-		<canvas id="ctx-ui" width="500" height="500" style="position:absolute;border:1px solid #000000;"></canvas>
-		
-		<div id="ui" style="position:absolute;width:500px;height:500px;">
+	<div id="game">
+		<canvas id="canvas" width="500" height="500" style="position:absolute;border:1px solid #000000;"></canvas>
+		<canvas id="canvas-ui" width="500" height="500" style="position:absolute;border:1px solid #000000;"></canvas>
+		<div id="hud" style="position:relative;">
 			<button onclick="changeMap()" style="position:absolute;bottom:0px;left:0px">
 				Change Map
 			</button>
-		
 		</div>
-		
+
 	</div>
 	
-	<div id="belowGame" style="margin-top:520px">	
+	<div id="belowGame">	
 		<div id="chat-text" style="width:500px;height:100px;overflow-y:scroll">
 			<div>Hello!</div>
 		</div>
 		<div id="inventory"></div>
 		<form id="chat-form">
-			<input id="chat-input" type="text" style="width:500px"></input>
+			<input id="chat-input" type="text" style="width:500px;"></input>
 		</form>
+		<br/>
 	</div>
 </div>
 
@@ -34,9 +33,6 @@
 <script src="/client/socket.js"></script>
 <script src="/client/Inventory.js"></script>
 <script>
-	// 
-	var WIDTH = 500;
-	var HEIGHT = 500;
 	var socket = io();
 	
 	//sign
@@ -56,6 +52,7 @@
 		if(data.success){
 			signDiv.style.display = 'none';
 			gameDiv.style.display = 'inline-block';
+			//resizeCanvas();
 		} else
 			alert("Sign in unsuccessul.");
 	});
@@ -123,10 +120,61 @@
 	Img.upgrade1.src = '/client/img/upgrade1.png';
 	Img.upgrade2 = new Image();
 	Img.upgrade2.src = '/client/img/upgrade2.png';
-	
-	var ctx = document.getElementById("ctx").getContext("2d");
-	var ctxUi = document.getElementById("ctx-ui").getContext("2d");
-	ctxUi.font = '30px Arial';
+
+	// canvas
+	var game = document.getElementById("game");
+	var canvas = document.getElementById("canvas").getContext("2d");
+	var canvasUi = document.getElementById("canvas-ui").getContext("2d");
+	var belowGame = document.getElementById("belowGame");
+
+	canvasUi.font = '30px Arial';
+	var WIDTH = 640;
+	var HEIGHT = 360;
+	var GAME_WIDTH = 640;
+	var GAME_HEIGHT = 360;
+
+	var resizeElement = function(element)
+	{
+		element.font = '30px Arial';
+		element.mozImageSmoothingEnabled = false;	//better graphics for pixel art
+		element.msImageSmoothingEnabled = false;
+		element.imageSmoothingEnabled = false;
+
+		element.style.width = GAME_WIDTH;
+		element.style.height = GAME_HEIGHT;
+	}
+
+	var resizeCanvas = function()
+	{
+		var ratio = 16 / 9;
+
+		GAME_WIDTH = window.innerWidth - 4 - ratio * belowGame.offsetHeight;
+		GAME_HEIGHT = window.innerHeight - 4 - belowGame.offsetHeight;
+
+
+
+		if(GAME_HEIGHT < GAME_WIDTH / ratio){
+			GAME_WIDTH = GAME_HEIGHT * ratio;
+		} else {
+			GAME_HEIGHT = GAME_WIDTH / ratio;
+		}
+
+		var length = game.children.length;
+		for (var i = 0; i < length; i++)
+		{
+			var element = game.children[i];
+			resizeElement(element);
+		}
+		resizeElement(game);
+	}
+
+	resizeCanvas();
+
+	window.addEventListener('resize',function(){
+  		resizeCanvas();
+	});
+
+	belowGame.addEventListener("load", resizeCanvas());
 	
 	var Player = function(initPack){
 		var self = {};
@@ -146,18 +194,18 @@
 			var y = self.y - Player.list[selfId].y + HEIGHT/2;
 			
 			var hpWidth = 30 * self.hp / self.hpMax;
-			ctx.fillStyle = 'red';
-			ctx.fillRect(x - hpWidth/2,y - 40,hpWidth,4);
+			canvas.fillStyle = 'red';
+			canvas.fillRect(x - hpWidth/2,y - 40,hpWidth,4);
 			
 			var width = Img.player.width*2;
 			var height = Img.player.height*2;
 			
 			
-			ctx.drawImage(Img.player,
+			canvas.drawImage(Img.player,
 				0,0,Img.player.width,Img.player.height,
 				x-width/2,y-height/2,width,height);
 			
-			//ctx.fillText(self.score,self.x,self.y-60);
+			//canvas.fillText(self.score,self.x,self.y-60);
 		}
 		
 		Player.list[self.id] = self;
@@ -184,7 +232,7 @@
 			var x = self.x - Player.list[selfId].x + WIDTH/2;
 			var y = self.y - Player.list[selfId].y + HEIGHT/2;
 			
-			ctx.drawImage(Img.bullet,
+			canvas.drawImage(Img.bullet,
 				0,0,Img.bullet.width,Img.bullet.height,
 				x-width/2,y-height/2,width,height);
 		}
@@ -226,7 +274,7 @@
 			var x = self.x - Player.list[selfId].x + WIDTH/2;
 			var y = self.y - Player.list[selfId].y + HEIGHT/2;
 			
-			ctx.drawImage(img,
+			canvas.drawImage(img,
 				0,0,img.width,img.height,
 				x-width/2,y-height/2,width,height);
 		}
@@ -312,7 +360,7 @@
 	setInterval(function(){
 		if(!selfId)
 			return;
-		ctx.clearRect(0,0,500,500);
+		canvas.clearRect(0,0,500,500);
 		drawMap();
 		drawScore();
 		for(var i in Player.list)
@@ -327,16 +375,16 @@
 		var player = Player.list[selfId];
 		var x = WIDTH/2 - player.x;
 		var y = HEIGHT/2 - player.y;
-		ctx.drawImage(Img.map[player.map],x,y);
+		canvas.drawImage(Img.map[player.map],x,y);
 	}
 	
 	var drawScore = function(){
 		if(lastScore === Player.list[selfId].score)
 			return;
 		lastScore = Player.list[selfId].score;
-		ctxUi.clearRect(0,0,500,500);
-		ctxUi.fillStyle = 'white';
-		ctxUi.fillText(Player.list[selfId].score,0,30);
+		canvasUi.clearRect(0,0,500,500);
+		canvasUi.fillStyle = 'white';
+		canvasUi.fillText(Player.list[selfId].score,0,30);
 	}
 
 	
