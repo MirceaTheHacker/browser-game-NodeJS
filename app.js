@@ -3,6 +3,7 @@
 require("./Database");
 require("./Entity");
 require("./client/Inventory");
+require("./Maps");
 
 var express = require("express");
 var app = express();
@@ -61,13 +62,13 @@ io.sockets.on("connection", function (socket) {
 
 setInterval(function () {
   var packs = Entity.getFrameUpdateData();
+  //packs.maps = Maps.getAllInitPack();
   for (var i in SOCKET_LIST) {
     var socket = SOCKET_LIST[i];
     socket.emit("init", packs.initPack);
     socket.emit("update", packs.updatePack);
     socket.emit("remove", packs.removePack);
   }
-  Upgrade.randomlyGenerate();
 }, 1000 / 25);
 
 /*

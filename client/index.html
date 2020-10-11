@@ -184,7 +184,7 @@
 		self.map = initPack.map;
 		
 		self.draw = function(){	
-			if(Player.list[selfId].map !== self.map)
+			if(Player.list[selfId].map.id !== self.map.id)
 				return;
 			var x = self.x - Player.list[selfId].x + WIDTH/2;
 			var y = self.y - Player.list[selfId].y + HEIGHT/2;
@@ -220,7 +220,7 @@
 		self.map = initPack.map;
 		
 		self.draw = function(){
-			if(Player.list[selfId].map !== self.map)
+			if(Player.list[selfId].map.id !== self.map.id)
 				return;
 			var width = Img.bullet.width/2;
 			var height = Img.bullet.height/2;
@@ -246,7 +246,7 @@
 		self.category = initPack.category;
 		
 		self.draw = function(){
-			if(Player.list[selfId].map !== self.map)
+			if(Player.list[selfId].map.id !== self.map.id)
 				return;
 
 			var img;
@@ -371,9 +371,11 @@
 		var player = Player.list[selfId];
 		var x = WIDTH / 2 - player.x;
 		var y = HEIGHT / 2 - player.y;
-		var image = Img.map[player.map];
+		var map = player.map
+		var image = Img.map[map.id];
+
 		canvas.drawImage(image, 0, 0, image.width, image.height,
-		 x, y, image.width * 2, image.height * 2);
+		 x, y, map.width, map.height);
 	}
 	
 	var drawScore = function(){

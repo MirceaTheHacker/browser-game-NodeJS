@@ -8,7 +8,7 @@ Entity = function (param) {
     spdX: 0,
     spdY: 0,
     id: "",
-    map: "forest",
+    map: null,
   };
   if (param) {
     if (param.x) self.x = param.x;
@@ -147,8 +147,7 @@ Player = function (param) {
 };
 
 Player.onConnect = function (socket, username, progress) {
-  var map = "forest";
-  if (Math.random() < 0.5) map = "field";
+  var map = Maps.getRandomMap();
   var player = Player({
     username: username,
     id: socket.id,
@@ -168,8 +167,8 @@ Player.onConnect = function (socket, username, progress) {
   });
 
   socket.on("changeMap", function (data) {
-    if (player.map === "field") player.map = "forest";
-    else player.map = "field";
+    if (player.map.id === "field") player.map = Maps.list['forest'];
+    else Maps.list['field'];
   });
 
   socket.on("sendMsgToServer", function (data) {
@@ -356,44 +355,6 @@ Upgrade.update = function () {
   }
 
   return pack;
-};
-
-Upgrade.randomlyGenerate = function () {
-  var map;
-  if (Upgrade.getNoOfUpgradesOnMap("field") <= 2) {
-    map = "field";
-  } else if (Upgrade.getNoOfUpgradesOnMap("forest") <= 2) {
-    map = "forest";
-  } else {
-    return;
-  }
-
-  //Math.random() returns a number between 0 and 1
-  var upgrade = {
-    x: Math.random() * 500,
-    y: Math.random() * 500,
-    id: Math.random(),
-    map: map,
-  };
-
-  if (Math.random() < 0.5) {
-    upgrade.category = "score";
-  } else {
-    upgrade.category = "atkSpd";
-  }
-
-  Upgrade(upgrade);
-};
-
-Upgrade.getNoOfUpgradesOnMap = function (map) {
-  var count = 0;
-  for (var id in Upgrade.list) {
-    var upgrade = Upgrade.list[id];
-    if (upgrade.map === map) {
-      count++;
-    }
-  }
-  return count;
 };
 
 Upgrade.getAllInitPack = function () {
